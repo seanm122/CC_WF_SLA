@@ -1,0 +1,65 @@
+// Sets "Accounting Next Step SLA" property to a two-day SLA when ticket status is "Working On". Business days calculated via custom javascript custom coded action.
+
+
+
+const hubspot = require('@hubspot/api-client');
+  
+exports.main = (event, callback) => {
+  //add po
+  const hubspotClient = new hubspot.Client({
+    apiKey: process.env.SLA_key
+  });
+
+  function addBusinessDays(date, days) {
+    var count = 0;
+    while (count < days) {
+      date.setDate(date.getDate() + 1);
+      if (date.getDay() !== 0 && date.getDay() !== 6) {
+        count++;
+      }
+    }
+    return date;  
+  }
+
+  function formatDate(inputDateTime) {
+    var date = new Date(inputDateTime);
+  
+    // Set time components to midnight in UTC
+    date.setUTCHours(0);
+    date.setUTCMinutes(0);
+    date.setUTCSeconds(0);
+    date.setUTCMilliseconds(0);
+  
+    // Get the components of the date
+    var year = date.getUTCFullYear();
+    var month = (date.getUTCMonth() + 1).toString().padStart(2, '0'); // Months are zero-based
+    var day = date.getUTCDate().toString().padStart(2, '0');
+  
+    // Format the date in YYYY-MM-DD format
+    var formattedDate = year + '-' + month + '-' + day;
+  
+    return formattedDate;
+  }
+
+  function slaDate2() {
+    // Example usage
+    var startDate = new Date();
+    var endDate = addBusinessDays(startDate, 2);
+    
+    // Set time part to midnight
+    endDate.setUTCHours(0);
+    endDate.setUTCMinutes(0);
+    endDate.setUTCSeconds(0);
+    endDate.setUTCMilliseconds(0);
+    
+    var formattedDate = formatDate(endDate);
+
+    callback({
+      outputFields: {
+        twoDaySLA: endDate.getTime(),// return milliseconds since Unix epoch
+      }
+    });
+  }
+
+  slaDate2();
+}
